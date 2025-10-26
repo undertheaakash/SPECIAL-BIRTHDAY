@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Welcome to My World</title>
+<style>
+  :root{
+    --accent:#e53935;
+    --accent-weak:#ff9aa2;
+    --modal-pink:#ffeef1;
+    --text:#222;
+  }
+  html,body{height:100%;margin:0;font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:var(--text); background:#6f720a; overflow:hidden;}
+  button{cursor:pointer;border:0;border-radius:10px;padding:10px 18px;background:var(--accent);color:#fff;font-weight:600;box-shadow:0 8px 20px rgba(0,0,0,0.08);}
+  button.ghost{background:#fff;color:var(--accent);border:2px solid var(--accent);}
+
+  /* floating hearts layer (global, lightweight) */
+  .floating-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .floating-heart{position:absolute;bottom:-60px;font-size:26px;opacity:0.95;animation:floatUp linear forwards}
+  @keyframes floatUp { from{transform:translateY(0) scale(1);} to{transform:translateY(-120vh) scale(1.25);opacity:0;} }
+
+  /* Page container style */
+  .page{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box;z-index:1;transition:opacity .45s ease, visibility .45s;}
+  .page.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .page.visible{opacity:1;visibility:visible;}
+
+  /* === Welcome === */
+  #welcome{background: url('9d8210fc-5b5c-4be9-b163-43c0af3f82ee.png') center/cover no-repeat; color:#fff; text-shadow:0 6px 20px rgba(0,0,0,0.45); flex-direction:column; gap:18px;}
+  #welcome h1{font-size:44px;margin:0;}
+
+/* === Password Page === */
+  #password{background:#161816;flex-direction:column;gap:14px;}
+  #password .bg-nums{position:fixed;inset:0;font-size:72px;color:rgba(233,30,99,0.04);z-index:0;pointer-events:none;display:flex;flex-wrap:wrap;padding:28px;gap:8px;line-height:0.9}
+  #password .content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+  input[type="text"], input[type="password"]{padding:10px 12px;border-radius:8px;border:1px solid #e6e6e6;font-size:16px;width:260px;text-align:center}
+
+/* === Questions (slides) === */
+  #questions{background:rgba(255,255,255,0.98);overflow:auto;align-items:flex-start;justify-content:flex-start;padding:36px 24px;}
+  .questions-wrap{max-width:980px;width:100%;margin:0 auto;position:relative;z-index:1}
+  .slides-viewport{width:100%;overflow:hidden;border-radius:12px}
+  .slides{display:flex;transition:transform .6s cubic-bezier(.2,.9,.2,1);transform:translateX(0);}
+  .slide{min-width:100%;box-sizing:border-box;padding:22px;background:#d40a62}
+  .qbox{background:#222222;border-radius:10px;padding:12px 14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,0.04)}
+  .qbox label{display:block;font-weight:700;margin-bottom:8px;color:var(--accent)}
+  .qbox textarea{width:100%;min-height:64px;border-radius:8px;border:1px solid #eee;padding:10px;font-size:15px;resize:vertical}
+
+/* navigation buttons under slides */
+  .slide-controls{display:flex;gap:12px;justify-content:center;margin-top:12px}
+
+/* === Wishes page (top-aligned, scrollable) === */
+  #wishes{background:#c50a0a;align-items:flex-start;justify-content:flex-start;padding:28px;overflow:auto}
+  .wishes-container{max-width:900px;margin:0 auto;background:linear-gradient(180deg,#fff 0%, #fff 60%);border-radius:10px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,0.06)}
+  .letter-box{background:#fff;border:1px solid #ffd6de;border-radius:10px;padding:18px 20px;line-height:1.45;color:#222;box-shadow:0 8px 24px rgba(255, 110, 140, 0.06)}
+  /* slow fade-in for letter */
+  .letter-box.fade-in{opacity:0;animation:fadeIn 3s forwards ease;}
+  @keyframes fadeIn{to{opacity:1;}}
+
+  .wishes-header{color:var(--accent);font-weight:800;margin-bottom:10px;font-size:22px}
+  .wishes-actions{margin-top:14px;display:flex;gap:10px;justify-content:flex-start}
+
+/* modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal{width:90%;max-width:700px;background:var(--modal-pink);padding:16px;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,0.25);position:relative}
+  .modal .close{position:absolute;right:12px;top:8px;background:transparent;border:none;font-size:20px;color:var(--accent);cursor:pointer}
+  .modal pre{white-space:pre-wrap;font-family:inherit;background:transparent;border:none;color:#222;}
+
+/* responsive */
+  @media (max-width:720px){
+    #welcome h1{font-size:30px}
+    .qbox textarea{min-height:48px}
+    .letter-box{padding:14px}
+  }
+</style>
+</head>
+<body>
+
+<!-- floating hearts layer -->
+<div class="floating-layer" id="floatingLayer" aria-hidden="true"></div>
+
+<!-- PAGE: Welcome -->
+<section id="welcome" class="page visible" aria-labelledby="w-title">
+  <div style="text-align:center">
+    <h1 id="w-title">Welcome to my world 💕</h1>
+    <div style="height:14px"></div>
+    <button onclick="goToPassword()">ENTER</button>
+  </div>
+</section>
+
+<!-- PAGE: Password -->
+<section id="password" class="page hidden" aria-labelledby="p-title">
+  <div class="bg-nums" aria-hidden="true">1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 0️⃣ 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣</div>
+  <div class="content" role="form" aria-labelledby="p-title">
+    <h2 id="p-title" style="color:var(--accent)">Enter password (DD/MM/YYYY)</h2>
+
+    <!-- PASSWORD INPUT + SHOW TOGGLE -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <input id="passInput" type="password" placeholder="DD/MM/YYYY" autocomplete="off" />
+      <label style="font-size:14px;color:#666;display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input id="showPass" type="checkbox" style="transform:scale(1.05)"/>
+        <span>Show password while entering</span>
+      </label>
+    </div>
+
+    <div style="height:8px"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="checkPassword()">Submit</button>
+      <button class="ghost" onclick="backToWelcome()">Back</button>
+    </div>
+  </div>
+</section>
+
+<!-- PAGE: Questions (slides) -->
+<section id="questions" class="page hidden" aria-labelledby="q-title">
+  <div class="questions-wrap" role="region" aria-labelledby="q-title" style="width:100%">
+    <h2 id="q-title" style="text-align:center;color:var(--accent);margin-bottom:12px">Please answer — there are no right or wrong answers 💬</h2>
+
+    <div class="slides-viewport" aria-hidden="false" style="max-width:980px;margin:0 auto">
+      <div class="slides" id="slides">
+        <!-- Slide 1: Q1-Q4 -->
+        <div class="slide" id="slide-1">
+          <div class="slide-inner" style="padding:18px">
+            <div class="qbox"><label>Q.1) WHERE WE HAVE MET ? ANSWER:</label><textarea id="a1" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.2) WHAT YOU HAVE LOST WHICH WE HAVE FOUND TOGETHER ? ANSWER:</label><textarea id="a2" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.3) WHAT IS YOUR FAVOURITE CHOCOLATE WHICH CONSIST OF GIFTS INSIDE IT ? ANSWER:</label><textarea id="a3" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.4) WHO IS THE FIRST PERSON COMES IN YOUR MIND WHEN YOU FALL IN TROUBLE? ANSWER:</label><textarea id="a4" placeholder="Type your answer..."></textarea></div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Q5-Q7 -->
+        <div class="slide" id="slide-2">
+          <div class="slide-inner" style="padding:18px">
+            <div class="qbox"><label>Q.5) WHAT IS THE BEST MEMORY OF 2024 ? ANSWER:</label><textarea id="a5" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.6) WHAT IS THE BEST BIRTHDAY GIFT A PERSON CAN GIVE YOU ? ANSWER:</label><textarea id="a6" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.7) WHICH IS YOUR DREAM PLACE YOU WANT TO VISIT WITH YOUR MOST LOVED PERSON ? ANSWER:</label><textarea id="a7" placeholder="Type your answer..."></textarea></div>
+          </div>
+        </div>
+
+        <!-- Slide 3: Q8-Q10 -->
+        <div class="slide" id="slide-3">
+          <div class="slide-inner" style="padding:18px">
+            <div class="qbox"><label>Q.8) WHICH THING COMES IN YOUR MIND WHEN YOU REALISE THAT YOU DID A BIG MISTAKE? ANSWER:</label><textarea id="a8" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.9) WHAT IS YOUR FAVOURITE SONG ? ANSWER:</label><textarea id="a9" placeholder="Type your answer..."></textarea></div>
+            <div class="qbox"><label>Q.10) WHAT IS YOUR FAVOURITE COLOUR ? ANSWER:</label><textarea id="a10" placeholder="Type your answer..."></textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- navigation -->
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:14px">
+      <button id="prevBtn" class="ghost" onclick="prevSlide()" style="display:none">⬅️ Previous</button>
+      <button id="nextBtn" onclick="nextSlide()">Next ➡️</button>
+    </div>
+  </div>
+</section>
+
+<!-- PAGE: Warm Wishes (top aligned, scrollable) -->
+<section id="wishes" class="page hidden" aria-labelledby="wish-title">
+  <div class="wishes-container" style="margin-top:12px">
+    <div class="wishes-header">Wishes</div>
+
+    <div class="letter-box fade-in" id="letterBox" style="margin-bottom:12px;max-height:70vh;overflow:auto">
+      <div style="white-space:pre-wrap;font-size:15px;line-height:1.6;color:#222">
+HAPPIEST BIRTHDAY TO MY SWEETEST PERSON
+(DEEPIKSHA ❤️)
+
+HEY DEEPIKSHA, Finally a special day comes after not having a single talk for last 3 months but believe me there were not a single minute I haven’t thought about you. Whenever a day start I always wished you a Beautiful Good Morning to you whenever I go to sleep I always think of you that you are doing good in your life and wished you a Good Night. 
+First I have to wish you from my bottom of heart that “HAPPY BIRTHDAY DEEPIKSHA, GOD BLESS YOU AND GIVE YOU STRENGTH TO ACHIEVE ALL YOUR GOALS AND BE VERY SUCCESSFULL IN LIFE’’.
+And you are the bravest and strongest girl I have meet in my life I haven’t seen someone who is suffering from so much pain and difficulties in life whether its about you are suffering from family problems and something personal but believe me you have got the gods blessing which always help you to stay stronger in this tough time. 
+Lets talk about something which is very important that is you and yes its always you who is most important.  So do you know you have got the most beautiful eyes in which someone can live his whole life while just watching them. But that’s not the end you got the most precious thing that is your dimple you can make someone smile without saying something your adorable smile is enough to forgot someone’s pain and everybody wants a wife like you who can say bye while going to office and make his day stress free for the rest of the day. And you got the lovely voice may your family says that you speak like crow but believe me you are not and you know the one fact that I can listen you  whole day without saying single words in between and you know whenever you are talking I always choose to listen you while I’m with you or on call it’s the best thing for me that I can hear you and I always regretted after fighting with you to not get a single call or text from you is the worst part of my life. I can’t tell you last 3 months were the worst month for me as I didn’t show you and not even heard a single word from you. It was all about how is it going but let it be everything is written in good way. 
+
+I just want to say that YES I’m missing you so much but don’t want to disturb you. Hoping that you are doing really amazing things and living happily without me. And I want you to be happy whatever the circumstances are. But definitely this message is not to disturb you or to not to make you realise that I’m missing you. Because you know as well your absence always give me a pain whether its in the library or not calling me more than one day. I’m always feel grateful about our meeting yes that’s the beautiful memory I have stored in my life every thing relates us whenever we have sit together may be its about that two crows who always choose to sit together when we sit together and when we don’t sit together then crows also not sit together and this happened all the time. Thank you so much DEEPIKSHA for giving me the best memories of my life its just about only 1 year but I feel like you are my last life’s soulmate as we shared a best bond together you can deny all this thing but you can not speak lie from yourself. There are a lot to say for you because you are the damn precious thing to me but I’m not gonna speak too much as you already know what you mean to me and how much I always used to cheer you and stand behind you. Just remember one thing whenever you can’t handle any difficult situation alone then don’t forget to call me you are the only one who is always free to call me whenever you are in the need of me I will be definitely there either your family not supports I will be there to support you. I respect you a lot DEEPIKSHA. BE HAPPY BE STRONG BE THE BRAVEST.
+      </div>
+    </div>
+
+    <div class="wishes-actions">
+      <button onclick="openAnswersModal()">View My Answers</button>
+      <button class="ghost" onclick="restartAll()">Restart & Clear</button>
+    </div>
+  </div>
+</section>
+
+<!-- Modal (hidden) -->
+<div id="modal" style="display:none;" aria-hidden="true">
+  <div class="modal-backdrop" onclick="closeModal()">
+    <div class="modal" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+      <button class="close" onclick="closeModal()">✕</button>
+      <h3 style="text-align:center;color:var(--accent)">Saved Answers</h3>
+      <pre id="modalContent" style="white-space:pre-wrap;margin-top:10px"></pre>
+      <div style="text-align:right;margin-top:8px"><button class="ghost" onclick="closeModal()">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Floating hearts creation (lightweight) ---------- */
+const floatingLayer = document.getElementById('floatingLayer');
+function spawnHeart(){
+  const el = document.createElement('div');
+  el.className = 'floating-heart';
+  el.style.left = (Math.random()*100) + 'vw';
+  el.style.fontSize = (18 + Math.random()*26) + 'px';
+  el.style.animationDuration = (4 + Math.random()*6) + 's';
+  el.textContent = '❤️';
+  floatingLayer.appendChild(el);
+  setTimeout(()=> el.remove(), 11000);
+}
+// initial batch + interval
+for(let i=0;i<8;i++) setTimeout(spawnHeart, i*180);
+setInterval(spawnHeart, 600);
+
+/* ---------- Page navigation helpers ---------- */
+const PAGE = {WELCOME:'welcome', PASSWORD:'password', QUESTIONS:'questions', WISHES:'wishes'};
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('visible'));
+  const el = document.getElementById(id);
+  if(el){ el.classList.remove('hidden'); el.classList.add('visible'); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+function goToPassword(){ showPage(PAGE.PASSWORD); document.getElementById('passInput').focus(); }
+function backToWelcome(){ showPage(PAGE.WELCOME); }
+
+/* ---------- Password logic (with show toggle) ---------- */
+const passInput = document.getElementById('passInput');
+const showPass = document.getElementById('showPass');
+showPass.addEventListener('change', () => {
+  passInput.type = showPass.checked ? 'text' : 'password';
+});
+
+function checkPassword(){
+  const v = document.getElementById('passInput').value.trim();
+  if(v === '03/11/2005'){
+    showPage(PAGE.QUESTIONS);
+    // small allow time to paint then load saved answers
+    setTimeout(()=> { loadAnswersToFields(); updateSlidesPosition(); }, 120);
+  } else {
+    alert('Incorrect password. Please try again.');
+  }
+}
+
+/* ---------- Slides logic (left-right) ---------- */
+const slidesEl = document.getElementById('slides');
+const totalSlides = 3;
+let currentSlide = 1;
+
+function updateSlidesPosition(){
+  const offset = (currentSlide - 1) * -100;
+  slidesEl.style.transform = `translateX(${offset}%)`;
+  document.getElementById('prevBtn').style.display = (currentSlide===1)?'none':'inline-block';
+  document.getElementById('nextBtn').innerText = (currentSlide===totalSlides)?'Finish 🎉':'Next ➡️';
+}
+function nextSlide(){
+  saveAnswersToLocal();
+  if(currentSlide < totalSlides){
+    currentSlide++;
+    updateSlidesPosition();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    // finish -> go to wishes
+    saveAnswersToLocal();
+    showPage(PAGE.WISHES);
+    const letter = document.getElementById('letterBox');
+    letter.classList.remove('fade-in');
+    void letter.offsetWidth;
+    letter.classList.add('fade-in');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+function prevSlide(){
+  if(currentSlide > 1){ currentSlide--; updateSlidesPosition(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+/* init slides CSS once DOM loaded */
+updateSlidesPosition();
+
+/* ---------- Save & load answers to localStorage ---------- */
+const qIds = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10'];
+const STORAGE_KEY = 'birthday_answers_v2';
+
+function saveAnswersToLocal(){
+  const data = {};
+  qIds.forEach(id => {
+    const el = document.getElementById(id);
+    data[id] = el ? el.value.trim() : '';
+  });
+  data._savedAt = (new Date()).toISOString();
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch(e){ console.warn('localStorage write failed', e); }
+}
+
+function loadAnswersToFields(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    qIds.forEach(id => {
+      const el = document.getElementById(id);
+      if(el && (data[id] !== undefined)) el.value = data[id];
+    });
+  } catch(e){}
+}
+
+// autosave on every textarea change
+qIds.forEach(id => {
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('input', () => saveAnswersToLocal());
+  }
+});
+
+/* ---------- Modal (view answers) ---------- */
+function openAnswersModal(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const container = document.getElementById('modalContent');
+  if(!raw){ container.textContent = '(no answers saved yet)'; }
+  else {
+    const data = JSON.parse(raw);
+    let out = '';
+    for(let i=1;i<=10;i++){
+      const key = 'a'+i;
+      out += `Q${i}: ${data[key] && data[key].length? data[key] : '(no answer)'}\n\n`;
+    }
+    out += `Saved at: ${data._savedAt || '(unknown)'}\n`;
+    container.textContent = out;
+  }
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal(){ document.getElementById('modal').style.display = 'none'; }
+
+/* ---------- Restart / clear ---------- */
+function restartAll(){
+  if(confirm('Restart and clear saved answers?')){
+    localStorage.removeItem(STORAGE_KEY);
+    qIds.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    currentSlide = 1; updateSlidesPosition();
+    showPage(PAGE.WELCOME);
+  }
+}
+
+/* ---------- keyboard support (optional) ---------- */
+document.addEventListener('keydown', (e) => {
+  if(document.getElementById('questions').classList.contains('visible')){
+    if(e.key === 'ArrowLeft') prevSlide();
+    if(e.key === 'ArrowRight') nextSlide();
+  }
+});
+
+/* ---------- Start on welcome ---------- */
+showPage(PAGE.WELCOME);
+</script>
+
+</body>
+</html>
